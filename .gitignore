@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+canvas.svg
+evals/results/

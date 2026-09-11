@@ -1,0 +1,372 @@
+[
+  {
+    "id": "create-01",
+    "input": "Draw a flowchart with Start, Process, and End connected by arrows",
+    "expectedLabels": [
+      "Start",
+      "Process",
+      "End"
+    ],
+    "expectedCounts": {
+      "arrow": 2
+    },
+    "category": "create",
+    "difficulty": "simple"
+  },
+  {
+    "id": "create-02",
+    "input": "Draw a login flow with Login, Validate, and Dashboard",
+    "expectedLabels": [
+      "Login",
+      "Validate",
+      "Dashboard"
+    ],
+    "expectedCounts": {
+      "arrow": 2
+    },
+    "category": "create",
+    "difficulty": "simple"
+  },
+  {
+    "id": "create-03",
+    "input": "Draw a shopping checkout flow with Cart, Payment, and Confirmation",
+    "expectedLabels": [
+      "Cart",
+      "Payment",
+      "Confirmation"
+    ],
+    "expectedCounts": {
+      "arrow": 2
+    },
+    "category": "create",
+    "difficulty": "simple"
+  },
+  {
+    "id": "create-04",
+    "input": "Draw a support process with Open Ticket, Investigate, and Resolve",
+    "expectedLabels": [
+      "Open Ticket",
+      "Investigate",
+      "Resolve"
+    ],
+    "expectedCounts": {
+      "arrow": 2
+    },
+    "category": "create",
+    "difficulty": "simple"
+  },
+  {
+    "id": "create-05",
+    "input": "Draw a deployment flow with Build, Test, and Deploy",
+    "expectedLabels": [
+      "Build",
+      "Test",
+      "Deploy"
+    ],
+    "expectedCounts": {
+      "arrow": 2
+    },
+    "category": "create",
+    "difficulty": "simple"
+  },
+  {
+    "id": "modify-01",
+    "input": "Make the login box red",
+    "seed": {
+      "elements": [
+        {
+          "id": "rect_login",
+          "type": "rectangle",
+          "x": 100,
+          "y": 100,
+          "width": 200,
+          "height": 80,
+          "text": "login"
+        },
+        {
+          "id": "rect_db",
+          "type": "rectangle",
+          "x": 500,
+          "y": 100,
+          "width": 200,
+          "height": 80,
+          "text": "database"
+        }
+      ]
+    },
+    "preservedIds": [
+      "rect_login",
+      "rect_db"
+    ],
+    "category": "modify",
+    "difficulty": "simple"
+  },
+  {
+    "id": "modify-02",
+    "input": "Rename the payment box to Billing",
+    "seed": {
+      "elements": [
+        {
+          "id": "rect_payment",
+          "type": "rectangle",
+          "x": 100,
+          "y": 100,
+          "width": 200,
+          "height": 80,
+          "text": "payment"
+        },
+        {
+          "id": "rect_receipt",
+          "type": "rectangle",
+          "x": 400,
+          "y": 100,
+          "width": 200,
+          "height": 80,
+          "text": "receipt"
+        }
+      ]
+    },
+    "preservedIds": [
+      "rect_payment",
+      "rect_receipt"
+    ],
+    "category": "modify",
+    "difficulty": "simple"
+  },
+  {
+    "id": "modify-03",
+    "input": "Turn the validate step into a diamond",
+    "seed": {
+      "elements": [
+        {
+          "id": "rect_validate",
+          "type": "rectangle",
+          "x": 100,
+          "y": 100,
+          "width": 200,
+          "height": 80,
+          "text": "validate"
+        },
+        {
+          "id": "rect_end",
+          "type": "rectangle",
+          "x": 400,
+          "y": 100,
+          "width": 200,
+          "height": 80,
+          "text": "end"
+        }
+      ]
+    },
+    "preservedIds": [
+      "rect_validate",
+      "rect_end"
+    ],
+    "category": "modify",
+    "difficulty": "simple"
+  },
+  {
+    "id": "modify-04",
+    "input": "Add a blue background to the database box",
+    "seed": {
+      "elements": [
+        {
+          "id": "rect_api",
+          "type": "rectangle",
+          "x": 100,
+          "y": 100,
+          "width": 200,
+          "height": 80,
+          "text": "api"
+        },
+        {
+          "id": "rect_database",
+          "type": "rectangle",
+          "x": 400,
+          "y": 100,
+          "width": 200,
+          "height": 80,
+          "text": "database"
+        }
+      ]
+    },
+    "preservedIds": [
+      "rect_api",
+      "rect_database"
+    ],
+    "category": "modify",
+    "difficulty": "simple"
+  },
+  {
+    "id": "modify-05",
+    "input": "Move the cache box lower",
+    "seed": {
+      "elements": [
+        {
+          "id": "rect_cache",
+          "type": "rectangle",
+          "x": 100,
+          "y": 100,
+          "width": 200,
+          "height": 80,
+          "text": "cache"
+        },
+        {
+          "id": "rect_api",
+          "type": "rectangle",
+          "x": 400,
+          "y": 100,
+          "width": 200,
+          "height": 80,
+          "text": "api"
+        }
+      ]
+    },
+    "preservedIds": [
+      "rect_cache",
+      "rect_api"
+    ],
+    "category": "modify",
+    "difficulty": "medium"
+  },
+  {
+    "id": "domain-01",
+    "input": "Draw an API request flow with Client, API Gateway, Service, and Database",
+    "expectedLabels": [
+      "Client",
+      "API Gateway",
+      "Service",
+      "Database"
+    ],
+    "expectedCounts": {
+      "arrow": 3
+    },
+    "keywords": [
+      "Client",
+      "API Gateway",
+      "Service",
+      "Database"
+    ],
+    "category": "domain",
+    "difficulty": "medium"
+  },
+  {
+    "id": "domain-02",
+    "input": "Draw an authentication flow with Browser, OAuth Provider, Token Service, and User Database",
+    "expectedLabels": [
+      "Browser",
+      "OAuth Provider",
+      "Token Service",
+      "User Database"
+    ],
+    "expectedCounts": {
+      "arrow": 3
+    },
+    "keywords": [
+      "Browser",
+      "OAuth Provider",
+      "Token Service",
+      "User Database"
+    ],
+    "category": "domain",
+    "difficulty": "medium"
+  },
+  {
+    "id": "domain-03",
+    "input": "Draw a data pipeline with Ingestion, Queue, Worker, and Warehouse",
+    "expectedLabels": [
+      "Ingestion",
+      "Queue",
+      "Worker",
+      "Warehouse"
+    ],
+    "expectedCounts": {
+      "arrow": 3
+    },
+    "keywords": [
+      "Ingestion",
+      "Queue",
+      "Worker",
+      "Warehouse"
+    ],
+    "category": "domain",
+    "difficulty": "medium"
+  },
+  {
+    "id": "domain-04",
+    "input": "Draw an e-commerce architecture with Web App, Catalog Service, Order Service, and Payment Provider",
+    "expectedLabels": [
+      "Web App",
+      "Catalog Service",
+      "Order Service",
+      "Payment Provider"
+    ],
+    "expectedCounts": {
+      "arrow": 3
+    },
+    "keywords": [
+      "Web App",
+      "Catalog Service",
+      "Order Service",
+      "Payment Provider"
+    ],
+    "category": "domain",
+    "difficulty": "medium"
+  },
+  {
+    "id": "edge-01",
+    "input": "Change the color of the missing box",
+    "expectedBehavior": "clear error explanation",
+    "category": "edge",
+    "difficulty": "simple",
+    "seed": {
+      "elements": []
+    }
+  },
+  {
+    "id": "edge-02",
+    "input": "Delete the unknown element named ghost",
+    "expectedBehavior": "clear error explanation",
+    "category": "edge",
+    "difficulty": "simple",
+    "seed": {
+      "elements": []
+    }
+  },
+  {
+    "id": "edge-03",
+    "input": "Create an empty diagram",
+    "expectedBehavior": "clear error explanation",
+    "category": "edge",
+    "difficulty": "simple"
+  },
+  {
+    "id": "edge-04",
+    "input": "Make every element green",
+    "expectedBehavior": "clear response",
+    "category": "edge",
+    "difficulty": "simple",
+    "seed": {
+      "elements": [
+        {
+          "id": "rect_a",
+          "type": "rectangle",
+          "x": 100,
+          "y": 100,
+          "width": 100,
+          "height": 60,
+          "text": "A"
+        },
+        {
+          "id": "rect_b",
+          "type": "rectangle",
+          "x": 300,
+          "y": 100,
+          "width": 100,
+          "height": 60,
+          "text": "B"
+        }
+      ]
+    }
+  }
+]
