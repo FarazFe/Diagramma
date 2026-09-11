@@ -13,7 +13,6 @@ from canvas import Element
 from tools import TOOLS, make_tool_functions
 from context import serialize_canvas
 
-
 load_dotenv()
 
 MODEL = os.getenv("AVALAI_MODEL", "gpt-4o-mini")
@@ -43,39 +42,32 @@ or data stores. Lay flows out left-to-right or top-to-bottom with readable spaci
 After tool work, briefly summarize what changed.
 """
 
-PLAN_PROMPT = """Plan the diagram before drawing it. Do not call tools.
-Analyze the user's request semantically rather than copying every noun into a box.
-Return a concise plan with the diagram purpose, each component and its role and shape,
-meaningful directional relationships, and a grouped or layered layout with approximate coordinates.
-For architecture diagrams, distinguish clients, gateways, services, providers, queues, and data stores.
-For flowcharts, distinguish actions, decisions, and terminal states."""
-
 
 def run_turn(
-    messages: list[dict[str, Any]],
-    canvas: list[Element],
-    client: OpenAI | None = None,
-    tools: list[dict[str, Any]] = TOOLS,
+        messages: list[dict[str, Any]],
+        canvas: list[Element],
+        client: OpenAI | None = None,
+        tools: list[dict[str, Any]] = TOOLS,
 ) -> str:
-    """Run one user turn until the model answers or the step cap is reached."""
     client = client or build_client()
     tool_functions = make_tool_functions(canvas)
 
-    user_prompt = next((message["content"] for message in reversed(messages) if message.get("role") == "user"), "")
-    if user_prompt and not canvas:
-        plan_response = client.chat.completions.create(
-            model=MODEL,
-            messages=[
-                {"role": "system", "content": PLAN_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-        )
-        plan = plan_response.choices[0].message.content or "No explicit plan was returned."
-        messages.append({"role": "assistant", "content": f"Diagram plan:\n{plan}"})
-
     for _ in range(MAX_STEPS):
-        contextual_messages = list(messages)
-        contextual_messages.insert(1, {"role": "system", "content": "Current canvas state:\n" + serialize_canvas(canvas)})
+        contextual_messages: list[dict[str, Any]] = [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT,
+            },
+            {
+                "role": "system",
+                "content": (
+                        "Current canvas state:\n"
+                        + serialize_canvas(canvas)
+                ),
+            },
+            *messages,
+        ]
+
         response = client.chat.completions.create(
             model=MODEL,
             messages=contextual_messages,
@@ -133,23 +125,26 @@ def run_turn_streaming(messages, canvas, client=None, tools=TOOLS):
         for chunk in stream:
             delta = chunk.choices[0].delta
             if delta.content:
-                print(delta.content, end='', flush=True); parts.append(delta.content)
+                print(delta.content, end='', flush=True);
+                parts.append(delta.content)
             for part in delta.tool_calls or []:
-                call = calls.setdefault(part.index, {'id':'','name':'','arguments':''})
+                call = calls.setdefault(part.index, {'id': '', 'name': '', 'arguments': ''})
                 if part.id: call['id'] = part.id
                 if part.function and part.function.name:
-                    call['name'] = part.function.name; print(f"\n⚙ {call['name']} …", flush=True)
+                    call['name'] = part.function.name;
+                    print(f"\n⚙ {call['name']} …", flush=True)
                 if part.function and part.function.arguments: call['arguments'] += part.function.arguments
-        assistant = {'role':'assistant','content':''.join(parts)}
-        if calls: assistant['tool_calls'] = [{'id':c['id'],'type':'function','function':{'name':c['name'],'arguments':c['arguments']}} for c in calls.values()]
+        assistant = {'role': 'assistant', 'content': ''.join(parts)}
+        if calls: assistant['tool_calls'] = [
+            {'id': c['id'], 'type': 'function', 'function': {'name': c['name'], 'arguments': c['arguments']}} for c in
+            calls.values()]
         messages.append(assistant)
         if not calls: print(); return assistant['content']
         for call in assistant['tool_calls']:
             try:
                 fn = tool_functions.get(call['function']['name'])
                 result = fn(json.loads(call['function']['arguments'])) if fn else 'Error: unknown tool.'
-            except Exception as error: result = f'Error while running tool: {error}'
-            messages.append({'role':'tool','tool_call_id':call['id'],'content':result})
+            except Exception as error:
+                result = f'Error while running tool: {error}'
+            messages.append({'role': 'tool', 'tool_call_id': call['id'], 'content': result})
     return 'Stopped: reached the maximum number of agent steps.'
-
-
