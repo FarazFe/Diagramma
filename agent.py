@@ -42,6 +42,57 @@ or data stores. Lay flows out left-to-right or top-to-bottom with readable spaci
 After tool work, briefly summarize what changed.
 """
 
+PLAN_PROMPT = """Create a concise design plan for the requested diagram. Do not call tools.
+Infer semantics instead of copying nouns into a row of boxes.
+
+Return these four sections:
+- Purpose: what the diagram communicates and the appropriate diagram type.
+- Components: each component's role and an appropriate shape.
+- Relationships: meaningful directed connections, including short arrow labels.
+- Layout: layers or groups and approximate positions that avoid overlaps.
+
+For architecture diagrams, distinguish clients, internal services, external providers,
+and data stores. Do not assume every component connects to the next component in the
+order it appears in the prompt.
+"""
+
+
+def create_plan(client: OpenAI, user_prompt: str) -> str:
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": PLAN_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+    )
+    return response.choices[0].message.content or "No plan returned."
+
+
+def messages_with_context(
+        messages: list[dict[str, Any]], canvas: list[Element]
+) -> list[dict[str, Any]]:
+    return [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": "Current canvas state:\n" + serialize_canvas(canvas)},
+        *[message for message in messages if message.get("role") != "system"],
+    ]
+
+
+def add_creation_plan(
+        messages: list[dict[str, Any]], canvas: list[Element], client: OpenAI
+) -> str | None:
+    if canvas:
+        return None
+    user_prompt = next(
+        (message["content"] for message in reversed(messages) if message.get("role") == "user"),
+        None,
+    )
+    if not user_prompt:
+        return None
+    plan = create_plan(client, user_prompt)
+    messages.append({"role": "assistant", "content": f"Diagram plan:\n{plan}"})
+    return plan
+
 
 def run_turn(
         messages: list[dict[str, Any]],
@@ -51,26 +102,12 @@ def run_turn(
 ) -> str:
     client = client or build_client()
     tool_functions = make_tool_functions(canvas)
+    add_creation_plan(messages, canvas, client)
 
     for _ in range(MAX_STEPS):
-        contextual_messages: list[dict[str, Any]] = [
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT,
-            },
-            {
-                "role": "system",
-                "content": (
-                        "Current canvas state:\n"
-                        + serialize_canvas(canvas)
-                ),
-            },
-            *messages,
-        ]
-
         response = client.chat.completions.create(
             model=MODEL,
-            messages=contextual_messages,
+            messages=messages_with_context(messages, canvas),
             tools=tools,
         )
         message = response.choices[0].message
@@ -119,10 +156,20 @@ def run_turn(
 def run_turn_streaming(messages, canvas, client=None, tools=TOOLS):
     client = client or build_client()
     tool_functions = make_tool_functions(canvas)
+    plan = add_creation_plan(messages, canvas, client)
+    if plan:
+        print(f"Planning diagram…\n{plan}\n", flush=True)
     for _ in range(MAX_STEPS):
-        stream = client.chat.completions.create(model=MODEL, messages=messages, tools=tools, stream=True)
+        stream = client.chat.completions.create(
+            model=MODEL,
+            messages=messages_with_context(messages, canvas),
+            tools=tools,
+            stream=True,
+        )
         parts, calls = [], {}
         for chunk in stream:
+            if not chunk.choices:
+                continue
             delta = chunk.choices[0].delta
             if delta.content:
                 print(delta.content, end='', flush=True);
