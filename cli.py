@@ -1,4 +1,5 @@
 from agent import run_turn_streaming
+from excalidraw import render_excalidraw
 from svg import render_svg
 
 def main():
@@ -10,5 +11,5 @@ def main():
         if prompt.lower() in {'quit','exit'}: break
         if not prompt: continue
         messages.append({'role':'user','content':prompt}); print('agent › ', end='', flush=True)
-        run_turn_streaming(messages, canvas); render_svg(canvas); print('[canvas.svg refreshed]')
+        run_turn_streaming(messages, canvas); render_svg(canvas); render_excalidraw(canvas); print('[canvas.svg and canvas.excalidraw refreshed]')
 if __name__ == '__main__': main()

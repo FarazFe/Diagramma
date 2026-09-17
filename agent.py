@@ -119,6 +119,37 @@ def add_creation_plan(
     return plan
 
 
+def preflight_canvas_request(
+        messages: list[dict[str, Any]], canvas: list[Element]
+) -> str | None:
+    """Handle canvas-state requests that do not require a model call."""
+    if canvas:
+        return None
+    user_prompt = next(
+        (message["content"] for message in reversed(messages) if message.get("role") == "user"),
+        "",
+    )
+    normalized = user_prompt.strip().lower()
+    if not normalized:
+        return None
+
+    empty_requests = ("empty diagram", "blank diagram", "empty canvas", "blank canvas")
+    if any(phrase in normalized for phrase in empty_requests):
+        return "Created an empty diagram. The canvas remains empty."
+
+    first_word = normalized.split(maxsplit=1)[0]
+    modification_verbs = {
+        "change", "modify", "update", "delete", "remove", "rename", "move", "turn",
+    }
+    creation_nouns = ("diagram", "flowchart", "architecture", "chart", "canvas")
+    impossible_modification = first_word in modification_verbs or (
+        first_word == "make" and not any(noun in normalized for noun in creation_nouns)
+    )
+    if impossible_modification:
+        return "No element was found to modify because the canvas is empty."
+    return None
+
+
 def run_turn(
         messages: list[dict[str, Any]],
         canvas: list[Element],
@@ -127,6 +158,10 @@ def run_turn(
 ) -> str:
     client = client or build_client()
     tool_functions = make_tool_functions(canvas)
+    preflight_reply = preflight_canvas_request(messages, canvas)
+    if preflight_reply:
+        messages.append({"role": "assistant", "content": preflight_reply})
+        return preflight_reply
     if profile == "baseline":
         system_prompt = BASELINE_SYSTEM_PROMPT
         tools = BASELINE_TOOLS
@@ -191,6 +226,11 @@ def run_turn(
 def run_turn_streaming(messages, canvas, client=None, profile: AgentProfile = "focused"):
     client = client or build_client()
     tool_functions = make_tool_functions(canvas)
+    preflight_reply = preflight_canvas_request(messages, canvas)
+    if preflight_reply:
+        messages.append({"role": "assistant", "content": preflight_reply})
+        print(preflight_reply)
+        return preflight_reply
     if profile == "baseline":
         system_prompt = BASELINE_SYSTEM_PROMPT
         tools = BASELINE_TOOLS

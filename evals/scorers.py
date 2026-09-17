@@ -94,14 +94,34 @@ def connection_score(case: dict[str, Any], result: dict[str, Any]) -> Score:
 
 
 def error_handling_score(case: dict[str, Any], result: dict[str, Any]) -> Score:
-    if case.get("category") != "edge":
+    if case.get("expectedOutcome") != "missing_target":
         return None
     reply = result["reply"].lower()
-    behavior = case.get("expectedBehavior", "clear error explanation").lower()
-    if "empty" in behavior:
-        return 1.0 if not result["canvas"] else 0.0
     phrases = ("not found", "missing", "couldn't find", "no element", "cannot find", "unknown")
-    return 1.0 if any(phrase in reply for phrase in phrases) else 0.0
+    explains_failure = any(phrase in reply for phrase in phrases)
+    seed = case.get("seed", {}).get("elements", [])
+    canvas_unchanged = result["canvas"] == seed
+    return (float(explains_failure) + float(canvas_unchanged)) / 2
+
+
+def edge_behavior_score(case: dict[str, Any], result: dict[str, Any]) -> Score:
+    outcome = case.get("expectedOutcome")
+    if outcome == "empty_canvas":
+        return 1.0 if not result["canvas"] else 0.0
+    if outcome == "all_elements_updated":
+        expected_updates = case.get("expectedUpdates", {})
+        preserved_ids = case.get("preservedIds", [])
+        elements_by_id = {element.get("id"): element for element in result["canvas"]}
+        checks = [
+            element_id in elements_by_id
+            and all(
+                elements_by_id[element_id].get(field) == expected
+                for field, expected in expected_updates.items()
+            )
+            for element_id in preserved_ids
+        ]
+        return sum(checks) / len(checks) if checks else 0.0
+    return None
 
 
 SCORERS: dict[str, Callable[[dict[str, Any], dict[str, Any]], Score]] = {
@@ -111,4 +131,5 @@ SCORERS: dict[str, Callable[[dict[str, Any], dict[str, Any]], Score]] = {
     "Keywords": keyword_score,
     "Connections": connection_score,
     "ErrorHandling": error_handling_score,
+    "EdgeBehavior": edge_behavior_score,
 }

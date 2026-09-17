@@ -365,7 +365,8 @@
   {
     "id": "edge-01",
     "input": "Change the color of the missing box",
-    "expectedBehavior": "clear error explanation",
+    "expectedOutcome": "missing_target",
+    "expectedCanvasUnchanged": true,
     "category": "edge",
     "difficulty": "simple",
     "seed": {
@@ -375,7 +376,8 @@
   {
     "id": "edge-02",
     "input": "Delete the unknown element named ghost",
-    "expectedBehavior": "clear error explanation",
+    "expectedOutcome": "missing_target",
+    "expectedCanvasUnchanged": true,
     "category": "edge",
     "difficulty": "simple",
     "seed": {
@@ -385,14 +387,21 @@
   {
     "id": "edge-03",
     "input": "Create an empty diagram",
-    "expectedBehavior": "clear error explanation",
+    "expectedOutcome": "empty_canvas",
     "category": "edge",
     "difficulty": "simple"
   },
   {
     "id": "edge-04",
     "input": "Make every element green",
-    "expectedBehavior": "clear response",
+    "expectedOutcome": "all_elements_updated",
+    "expectedUpdates": {
+      "backgroundColor": "green"
+    },
+    "preservedIds": [
+      "rect_a",
+      "rect_b"
+    ],
     "category": "edge",
     "difficulty": "simple",
     "seed": {

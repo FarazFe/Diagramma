@@ -100,11 +100,3 @@ canvas = [
 ]
 
 result = render_svg(canvas, "rect_login.svg")
-
-
-
-"""
-1-Because it's a good design and it uses good abstraction from underlying layers
-2- I dont know, I think arrows means a relation
-3- I don't know
-"""

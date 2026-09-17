@@ -21,11 +21,16 @@ def main():
         default="focused",
     )
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--case", action="append", dest="case_ids")
     args = parser.parse_args()
     output = args.output or Path(f"evals/results/{args.profile}.json")
 
     rows = []
-    for case in load_cases():
+    cases = load_cases()
+    if args.case_ids:
+        selected = set(args.case_ids)
+        cases = [case for case in cases if case["id"] in selected]
+    for case in cases:
         result = run_case(case, build_client, profile=args.profile)
         scores = {name: scorer(case, result) for name, scorer in SCORERS.items()}
         rows.append({**result, "scores": scores})
