@@ -7,7 +7,7 @@ from typing import Any, Callable
 from canvas import Element, connect_elements, replace_canvas, update_element
 
 
-ELEMENT_SCHEMA = {
+NODE_SCHEMA = {
     "type": "object",
     "properties": {
         "id": {"type": "string", "description": "Unique element identifier."},
@@ -28,8 +28,60 @@ ELEMENT_SCHEMA = {
     "additionalProperties": False,
 }
 
+ELEMENT_SCHEMA = {
+    **NODE_SCHEMA,
+    "properties": {
+        **NODE_SCHEMA["properties"],
+        "type": {
+            "type": "string",
+            "enum": ["rectangle", "ellipse", "diamond", "text", "arrow", "line"],
+        },
+    },
+}
 
-TOOLS = [
+
+MODIFY_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "modify_diagram",
+        "description": (
+            "Modify one existing diagram element by its exact id. "
+            "Only include fields that should change."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "element_id": {"type": "string"},
+                "updates": {"type": "object"},
+            },
+            "required": ["element_id", "updates"],
+            "additionalProperties": False,
+        },
+    },
+}
+
+
+BASELINE_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "generate_diagram",
+            "description": "Create a complete diagram as an array of elements.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "elements": {"type": "array", "items": ELEMENT_SCHEMA}
+                },
+                "required": ["elements"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    MODIFY_TOOL,
+]
+
+
+FOCUSED_TOOLS = [
     {
         "type": "function",
         "function": {
@@ -43,7 +95,7 @@ TOOLS = [
                 "properties": {
                     "elements": {
                         "type": "array",
-                        "items": ELEMENT_SCHEMA,
+                        "items": NODE_SCHEMA,
                     }
                 },
                 "required": ["elements"],
@@ -84,26 +136,10 @@ TOOLS = [
             }
         }
     },
-    {
-        "type": "function",
-        "function": {
-            "name": "modify_diagram",
-            "description": (
-                "Modify one existing diagram element by its exact id. "
-                "Only include fields that should change."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "element_id": {"type": "string"},
-                    "updates": {"type": "object"},
-                },
-                "required": ["element_id", "updates"],
-                "additionalProperties": False,
-            },
-        },
-    },
+    MODIFY_TOOL,
 ]
+
+TOOLS = FOCUSED_TOOLS
 
 
 ToolFunction = Callable[[dict[str, Any]], str]

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any
+from typing import Any, Literal
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from canvas import Element
-from tools import TOOLS, make_tool_functions
+from tools import BASELINE_TOOLS, FOCUSED_TOOLS, make_tool_functions
 from context import serialize_canvas
 
 load_dotenv()
@@ -29,7 +29,28 @@ def build_client() -> OpenAI:
     )
 
 
-SYSTEM_PROMPT = """You are a diagram design assistant controlling a canvas.
+AgentProfile = Literal["baseline", "planning", "focused"]
+
+BASELINE_SYSTEM_PROMPT = """You are a diagram design assistant controlling a canvas.
+Use generate_diagram to create a complete diagram from scratch.
+Use modify_diagram to change one existing element when the user requests a modification.
+Give every element a unique id and use valid element types.
+Lay flows out left-to-right or top-to-bottom with readable spacing.
+After tool work, briefly summarize what changed.
+"""
+
+PLANNING_SYSTEM_PROMPT = """You are a diagram design assistant controlling a canvas.
+Use generate_diagram to create a complete diagram from scratch.
+Use modify_diagram to change one existing element when the user requests a modification.
+Give every element a unique id and use valid element types.
+Infer each component's role and the meaningful relationships between components.
+Use diamonds for decisions, ellipses for start/end states when appropriate, and rectangles
+for processes, services, or systems. Add arrows only for real directional relationships.
+Group or layer components and avoid overlaps.
+After tool work, briefly summarize what changed.
+"""
+
+FOCUSED_SYSTEM_PROMPT = """You are a diagram design assistant controlling a canvas.
 Use generate_diagram to create a complete diagram from scratch.
 For a new diagram, generate nodes first, then use connect_elements to add every
 meaningful directed relationship. Never draw arrows with raw coordinates.
@@ -43,6 +64,8 @@ Group or layer components when the architecture implies clients, services, depen
 or data stores. Lay flows out left-to-right or top-to-bottom with readable spacing.
 After tool work, briefly summarize what changed.
 """
+
+SYSTEM_PROMPT = FOCUSED_SYSTEM_PROMPT
 
 PLAN_PROMPT = """Create a concise design plan for the requested diagram. Do not call tools.
 Infer semantics instead of copying nouns into a row of boxes.
@@ -71,10 +94,10 @@ def create_plan(client: OpenAI, user_prompt: str) -> str:
 
 
 def messages_with_context(
-        messages: list[dict[str, Any]], canvas: list[Element]
+        messages: list[dict[str, Any]], canvas: list[Element], system_prompt: str
 ) -> list[dict[str, Any]]:
     return [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt},
         {"role": "system", "content": "Current canvas state:\n" + serialize_canvas(canvas)},
         *[message for message in messages if message.get("role") != "system"],
     ]
@@ -100,16 +123,26 @@ def run_turn(
         messages: list[dict[str, Any]],
         canvas: list[Element],
         client: OpenAI | None = None,
-        tools: list[dict[str, Any]] = TOOLS,
+        profile: AgentProfile = "focused",
 ) -> str:
     client = client or build_client()
     tool_functions = make_tool_functions(canvas)
-    add_creation_plan(messages, canvas, client)
+    if profile == "baseline":
+        system_prompt = BASELINE_SYSTEM_PROMPT
+        tools = BASELINE_TOOLS
+    elif profile == "planning":
+        system_prompt = PLANNING_SYSTEM_PROMPT
+        tools = BASELINE_TOOLS
+        add_creation_plan(messages, canvas, client)
+    else:
+        system_prompt = FOCUSED_SYSTEM_PROMPT
+        tools = FOCUSED_TOOLS
+        add_creation_plan(messages, canvas, client)
 
     for _ in range(MAX_STEPS):
         response = client.chat.completions.create(
             model=MODEL,
-            messages=messages_with_context(messages, canvas),
+            messages=messages_with_context(messages, canvas, system_prompt),
             tools=tools,
         )
         message = response.choices[0].message
@@ -155,16 +188,27 @@ def run_turn(
     return "Stopped: reached the maximum number of agent steps."
 
 
-def run_turn_streaming(messages, canvas, client=None, tools=TOOLS):
+def run_turn_streaming(messages, canvas, client=None, profile: AgentProfile = "focused"):
     client = client or build_client()
     tool_functions = make_tool_functions(canvas)
-    plan = add_creation_plan(messages, canvas, client)
+    if profile == "baseline":
+        system_prompt = BASELINE_SYSTEM_PROMPT
+        tools = BASELINE_TOOLS
+        plan = None
+    elif profile == "planning":
+        system_prompt = PLANNING_SYSTEM_PROMPT
+        tools = BASELINE_TOOLS
+        plan = add_creation_plan(messages, canvas, client)
+    else:
+        system_prompt = FOCUSED_SYSTEM_PROMPT
+        tools = FOCUSED_TOOLS
+        plan = add_creation_plan(messages, canvas, client)
     if plan:
         print(f"Planning diagram…\n{plan}\n", flush=True)
     for _ in range(MAX_STEPS):
         stream = client.chat.completions.create(
             model=MODEL,
-            messages=messages_with_context(messages, canvas),
+            messages=messages_with_context(messages, canvas, system_prompt),
             tools=tools,
             stream=True,
         )
