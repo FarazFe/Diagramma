@@ -31,6 +31,8 @@ def build_client() -> OpenAI:
 
 SYSTEM_PROMPT = """You are a diagram design assistant controlling a canvas.
 Use generate_diagram to create a complete diagram from scratch.
+For a new diagram, generate nodes first, then use connect_elements to add every
+meaningful directed relationship. Never draw arrows with raw coordinates.
 Use modify_diagram to change one existing element when the user requests a modification.
 Give every element a unique id and use valid element types.
 Do not merely turn every noun in the prompt into a rectangle.

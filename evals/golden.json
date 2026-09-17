@@ -10,6 +10,10 @@
     "expectedCounts": {
       "arrow": 2
     },
+    "expectedConnections": [
+      {"source": "Start", "target": "Process"},
+      {"source": "Process", "target": "End"}
+    ],
     "category": "create",
     "difficulty": "simple"
   },
@@ -24,6 +28,10 @@
     "expectedCounts": {
       "arrow": 2
     },
+    "expectedConnections": [
+      {"source": "Login", "target": "Validate"},
+      {"source": "Validate", "target": "Dashboard"}
+    ],
     "category": "create",
     "difficulty": "simple"
   },
@@ -38,6 +46,10 @@
     "expectedCounts": {
       "arrow": 2
     },
+    "expectedConnections": [
+      {"source": "Cart", "target": "Payment"},
+      {"source": "Payment", "target": "Confirmation"}
+    ],
     "category": "create",
     "difficulty": "simple"
   },
@@ -52,6 +64,10 @@
     "expectedCounts": {
       "arrow": 2
     },
+    "expectedConnections": [
+      {"source": "Open Ticket", "target": "Investigate"},
+      {"source": "Investigate", "target": "Resolve"}
+    ],
     "category": "create",
     "difficulty": "simple"
   },
@@ -66,6 +82,10 @@
     "expectedCounts": {
       "arrow": 2
     },
+    "expectedConnections": [
+      {"source": "Build", "target": "Test"},
+      {"source": "Test", "target": "Deploy"}
+    ],
     "category": "create",
     "difficulty": "simple"
   },
@@ -241,6 +261,11 @@
     "expectedCounts": {
       "arrow": 3
     },
+    "expectedConnections": [
+      {"source": "Client", "target": "API Gateway"},
+      {"source": "API Gateway", "target": "Service"},
+      {"source": "Service", "target": "Database"}
+    ],
     "keywords": [
       "Client",
       "API Gateway",
@@ -262,6 +287,11 @@
     "expectedCounts": {
       "arrow": 3
     },
+    "expectedConnections": [
+      {"source": "Browser", "target": "OAuth Provider"},
+      {"source": "OAuth Provider", "target": "User Database"},
+      {"source": "OAuth Provider", "target": "Token Service"}
+    ],
     "keywords": [
       "Browser",
       "OAuth Provider",
@@ -283,6 +313,11 @@
     "expectedCounts": {
       "arrow": 3
     },
+    "expectedConnections": [
+      {"source": "Ingestion", "target": "Queue"},
+      {"source": "Queue", "target": "Worker"},
+      {"source": "Worker", "target": "Warehouse"}
+    ],
     "keywords": [
       "Ingestion",
       "Queue",
@@ -304,6 +339,20 @@
     "expectedCounts": {
       "arrow": 3
     },
+    "expectedConnections": [
+      {
+        "source": "Web App",
+        "target": "Catalog Service"
+      },
+      {
+        "source": "Web App",
+        "target": "Order Service"
+      },
+      {
+        "source": "Order Service",
+        "target": "Payment Provider"
+      }
+    ],
     "keywords": [
       "Web App",
       "Catalog Service",

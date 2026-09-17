@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from canvas import Element, replace_canvas, update_element
+from canvas import Element, connect_elements, replace_canvas, update_element
 
 
 ELEMENT_SCHEMA = {
@@ -13,7 +13,7 @@ ELEMENT_SCHEMA = {
         "id": {"type": "string", "description": "Unique element identifier."},
         "type": {
             "type": "string",
-            "enum": ["rectangle", "ellipse", "diamond", "text", "arrow", "line"],
+            "enum": ["rectangle", "ellipse", "diamond", "text"],
         },
         "x": {"type": "number"},
         "y": {"type": "number"},
@@ -35,8 +35,8 @@ TOOLS = [
         "function": {
             "name": "generate_diagram",
             "description": (
-                "Create a complete new diagram. Use this when the user asks "
-                "to draw, create, or design a diagram from scratch."
+                "Create the nodes for a new diagram. Do not create arrows here. "
+                "After the nodes exist, use connect_elements with their exact IDs."
             ),
             "parameters": {
                 "type": "object",
@@ -50,6 +50,39 @@ TOOLS = [
                 "additionalProperties": False,
             },
         },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "connect_elements",
+            "description": (
+                "Add directed relationships between existing nodes. Coordinates are "
+                "calculated automatically. Use semantic source and target IDs from "
+                "the current canvas, and include a short relationship label."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "connections": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "source_id": {"type": "string"},
+                                "target_id": {"type": "string"},
+                                "label": {"type": "string"},
+                                "strokeColor": {"type": "string"}
+                            },
+                            "required": ["source_id", "target_id", "label"],
+                            "additionalProperties": False
+                        }
+                    }
+                },
+                "required": ["connections"],
+                "additionalProperties": False
+            }
+        }
     },
     {
         "type": "function",
@@ -84,7 +117,11 @@ def make_tool_functions(canvas: list[Element]) -> dict[str, ToolFunction]:
     def modify(args: dict[str, Any]) -> str:
         return update_element(canvas, args["element_id"], args["updates"])
 
+    def connect(args: dict[str, Any]) -> str:
+        return connect_elements(canvas, args["connections"])
+
     return {
         "generate_diagram": generate,
+        "connect_elements": connect,
         "modify_diagram": modify,
     }

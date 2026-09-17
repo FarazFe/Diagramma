@@ -10,6 +10,25 @@ from canvas import validate_element
 Score = float | None
 
 
+def _label_matches(expected: str, actual: str) -> bool:
+    expected_words = expected.strip().lower().split()
+    actual_words = actual.strip().lower().split()
+    return all(
+        any(
+            expected_word == actual_word
+            or (
+                min(len(expected_word), len(actual_word)) >= 5
+                and (
+                    expected_word.startswith(actual_word[:5])
+                    or actual_word.startswith(expected_word[:5])
+                )
+            )
+            for actual_word in actual_words
+        )
+        for expected_word in expected_words
+    )
+
+
 def schema_score(case: dict[str, Any], result: dict[str, Any]) -> Score:
     canvas = result["canvas"]
     if not canvas:
@@ -20,9 +39,9 @@ def schema_score(case: dict[str, Any], result: dict[str, Any]) -> Score:
 def structure_score(case: dict[str, Any], result: dict[str, Any]) -> Score:
     checks: list[bool] = []
     canvas = result["canvas"]
-    labels = {str(element.get("text", "")).strip().lower() for element in canvas}
+    labels = [str(element.get("text", "")) for element in canvas]
     for expected in case.get("expectedLabels", []):
-        checks.append(str(expected).strip().lower() in labels)
+        checks.append(any(_label_matches(str(expected), label) for label in labels))
     for element_type, minimum in case.get("expectedCounts", {}).items():
         actual = sum(element.get("type") == element_type for element in canvas)
         checks.append(actual >= int(minimum))
@@ -45,6 +64,35 @@ def keyword_score(case: dict[str, Any], result: dict[str, Any]) -> Score:
     return sum(keyword.lower() in text for keyword in keywords) / len(keywords)
 
 
+def connection_score(case: dict[str, Any], result: dict[str, Any]) -> Score:
+    expected = case.get("expectedConnections")
+    if not expected:
+        return None
+
+    labels_by_id = {
+        element.get("id"): str(element.get("text", "")).strip().lower()
+        for element in result["canvas"]
+        if element.get("type") not in {"arrow", "line"}
+    }
+    actual = {
+        (
+            labels_by_id.get(element.get("sourceId"), ""),
+            labels_by_id.get(element.get("targetId"), ""),
+        )
+        for element in result["canvas"]
+        if element.get("type") == "arrow"
+    }
+    matched = 0
+    for connection in expected:
+        if any(
+            _label_matches(connection["source"], source)
+            and _label_matches(connection["target"], target)
+            for source, target in actual
+        ):
+            matched += 1
+    return matched / len(expected)
+
+
 def error_handling_score(case: dict[str, Any], result: dict[str, Any]) -> Score:
     if case.get("category") != "edge":
         return None
@@ -61,5 +109,6 @@ SCORERS: dict[str, Callable[[dict[str, Any], dict[str, Any]], Score]] = {
     "Structure": structure_score,
     "Preservation": preservation_score,
     "Keywords": keyword_score,
+    "Connections": connection_score,
     "ErrorHandling": error_handling_score,
 }
